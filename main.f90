@@ -2,7 +2,7 @@ PROGRAM CMDLINE
 ! Author: Tyler H. Chang
 ! Last Update: June, 2018
 ! Driver code for testing the VECTOR classes.
-USE VECTOR_MOD
+USE VECTOR_CLASS
 IMPLICIT NONE
 
 ! Declare local data.
@@ -40,7 +40,7 @@ END DO
 IF (INPUT .EQ. 'r' .OR. INPUT .EQ. 'R') THEN
 
 ! Create a new REALVECTOR of fixed dimension 1
-CALL NEWVECTOR(RVEC, IERR)
+RVEC = REALVECTOR(DIM=1, ISTAT=IERR)
 IF (IERR .NE. 0) THEN
    PRINT *, 'An error occurred while initializing vector'
    RETURN
@@ -51,12 +51,10 @@ DO WHILE (.TRUE.)
 
 ! Print the current vector.
 WRITE (*,'(a)',ADVANCE='no') 'Current VECTOR: <'
-DO I=1, VECTORSIZE(RVEC)
-   WRITE (*,'(1f8.2)',ADVANCE='no') VECTORITEM(RVEC,I,IERR)
+DO I=1, RVEC%LENGTH()
+   WRITE (*,'(1f8.2)',ADVANCE='no') RVEC%ITEM(I,IERR)
 END DO
 WRITE (*,*) '>'
-PRINT *, 'Total memory used = ', VECTORSIZE(RVEC)
-PRINT *, 'Total memory allocated = ', RVEC%MAXLEN
 
 ! Read the next INPUT from user.
 PRINT *, '-----------------------------------'
@@ -65,6 +63,7 @@ PRINT *, '(i) insert'
 PRINT *, '(d) delete'
 PRINT *, '(p) push'
 PRINT *, '(v) pop'
+PRINT *, '(s) set'
 PRINT *, '(q) quit'
 READ (*,*) INPUT
 PRINT *, '-----------------------------------'
@@ -74,41 +73,50 @@ IF(INPUT .EQ. 'q' .OR. INPUT .EQ. 'Q') THEN
    EXIT
 ! Perform an insert.
 ELSE IF(INPUT .EQ. 'i' .OR. INPUT.EQ.'I') THEN
-   WRITE (*,'(a)',ADVANCE='no'), &
+   WRITE (*,'(a)',ADVANCE='no') &
       'Enter item to insert then index: (Item, Index) '
    READ (*,*) RITEM, I
-   CALL VECTORINS(RVEC, RITEM, I, IERR)
+   CALL RVEC%INSERT(RITEM, I, ISTAT=IERR)
    IF(IERR .NE. 0) THEN
       PRINT *, &
          'Error occurred while inserting ITEM at INDEX'
    END IF
 ! Perform a deletion.
 ELSE IF(INPUT .EQ. 'd' .OR. INPUT.EQ.'D') THEN
-    WRITE (*,'(a)',ADVANCE='no'), 'Enter index to delete: '
+    WRITE (*,'(a)',ADVANCE='no') 'Enter index to delete: '
     READ (*,*) I
-   CALL VECTORDEL(RVEC,I,IERR)
+   CALL RVEC%DELETE(I,IERR)
    IF(IERR .NE. 0) THEN
       PRINT *, 'Error occurred while deleting at INDEX'
    END IF
 ! Push an item.
 ELSE IF(INPUT .EQ. 'p' .OR. INPUT.EQ.'P') THEN
-   WRITE (*,'(a)',ADVANCE='no'), 'Enter item to push: '
+   WRITE (*,'(a)',ADVANCE='no') 'Enter item to push: '
    READ (*,*) RITEM
-   CALL VECTORPUSH(RVEC,RITEM,IERR)
+   CALL RVEC%PUSH(RITEM, ISTAT=IERR)
    IF(IERR .NE. 0) THEN
       PRINT *, 'Error occurred while pushing ITEM'
    END IF
 ! Pop an item.
 ELSE IF(INPUT .EQ. 'v' .OR. INPUT.EQ.'V') THEN
-   CALL VECTORPOP(RVEC,RITEM,IERR)
+   CALL RVEC%POP(RITEM, ISTAT=IERR)
    IF(IERR .NE. 0) THEN
       PRINT *, 'Error occurred while popping'
    END IF
    PRINT *, 'Top ITEM was: ', ritem
+! Set an item.
+ELSE IF(INPUT .EQ. 's' .OR. INPUT.EQ.'S') THEN
+   WRITE (*,'(a)',ADVANCE='no') &
+      'Enter index then value to set: (Index, Item) '
+   READ (*,*) I, RITEM
+   CALL RVEC%SET(I, RITEM, ISTAT=IERR)
+   IF(IERR .NE. 0) THEN
+      PRINT *, 'Error occurred while setting'
+   END IF
 END IF
 END DO
 ! Free the heap.
-CALL VECTORFREE(RVEC, IERR)
+CALL RVEC%FREE(ISTAT=IERR)
 IF(IERR .NE. 0) THEN
    PRINT *, 'Error occurred while freeing memory'
 END IF
@@ -117,7 +125,7 @@ END IF
 ELSE
 
 ! Create a new INTVECTOR of fixed dimension 1.
-CALL NEWVECTOR(IVEC, IERR)
+IVEC = INTVECTOR(DIM=1, ISTAT=IERR)
 IF (IERR .NE. 0) THEN
    PRINT *, 'An error occurred while initializing vector'
    RETURN
@@ -128,12 +136,10 @@ DO WHILE (.TRUE.)
 
 ! Print the VECTOR.
 WRITE (*,'(a)',ADVANCE='no') 'Current VECTOR: <'
-DO I=1, VECTORSIZE(IVEC)
-   WRITE (*,'(1i8)',ADVANCE='no') VECTORITEM(IVEC,I,IERR)
+DO I=1, IVEC%LENGTH()
+   WRITE (*,'(1i8)',ADVANCE='no') IVEC%ITEM(I, ISTAT=IERR)
 END DO
 WRITE (*,*) '>'
-PRINT *, 'Total memory used = ', VECTORSIZE(IVEC)
-PRINT *, 'Total memory allocated = ', IVEC%MAXLEN
 
 ! Read the next user INPUT.
 PRINT *, '-----------------------------------'
@@ -151,41 +157,50 @@ IF(INPUT .EQ. 'q' .OR. INPUT .EQ. 'Q') THEN
    EXIT
 ! Perform an insert.
 ELSE IF(INPUT .EQ. 'i' .OR. INPUT.EQ.'I') THEN
-   WRITE (*,'(a)',ADVANCE='no'), &
+   WRITE (*,'(a)',ADVANCE='no') &
       'Enter item to insert then index: (Item, Index) '
    READ (*,*) IITEM, I
-   CALL VECTORINS(IVEC, IITEM, I, IERR)
+   CALL IVEC%INSERT(IITEM, I, ISTAT=IERR)
    IF(ierr .NE. 0) THEN
       PRINT *, &
          'Error occurred while inserting ITEM at INDEX'
    END IF
 ! Perform a deletion.
 ELSE IF(INPUT .EQ. 'd' .OR. INPUT.EQ.'D') THEN
-    WRITE (*,'(a)',ADVANCE='no'), 'Enter index to delete: '
+    WRITE (*,'(a)',ADVANCE='no') 'Enter index to delete: '
     READ (*,*) i
-   CALL VECTORDEL(IVEC,I,IERR)
+   CALL IVEC%DELETE(I, ISTAT=IERR)
    IF(IERR .NE. 0) THEN
       PRINT *, 'Error occurred while deleting at INDEX'
    END IF
 ! Push an item.
 ELSE IF(INPUT .EQ. 'p' .OR. INPUT.EQ.'P') THEN
-   WRITE (*,'(a)',ADVANCE='no'), 'Enter item to push: '
+   WRITE (*,'(a)',ADVANCE='no') 'Enter item to push: '
    READ (*,*) IITEM
-   CALL VECTORPUSH(IVEC,IITEM,IERR)
+   CALL IVEC%PUSH(IITEM, ISTAT=IERR)
    IF(IERR .NE. 0) THEN
       PRINT *, 'Error occurred while pushing ITEM'
    END IF
 ! Pop an item.
 ELSE IF(INPUT .EQ. 'v' .OR. INPUT.EQ.'V') THEN
-   CALL VECTORPOP(IVEC,IITEM,IERR)
+   CALL IVEC%POP(IITEM, ISTAT=IERR)
    IF(IERR .NE. 0) THEN
       PRINT *, 'Error occurred while popping'
    END IF
    PRINT *, 'Top ITEM was: ', IITEM
+! Set an item.
+ELSE IF(INPUT .EQ. 's' .OR. INPUT.EQ.'S') THEN
+   WRITE (*,'(a)',ADVANCE='no') &
+      'Enter index then value to set: (Index, Item) '
+   READ (*,*) I, IITEM
+   CALL IVEC%SET(I, IITEM, ISTAT=IERR)
+   IF(IERR .NE. 0) THEN
+      PRINT *, 'Error occurred while setting'
+   END IF
 END IF
 END DO
 ! Free the heap memory.
-CALL VECTORFREE(IVEC, IERR)
+CALL IVEC%FREE(ISTAT=IERR)
 IF(IERR .NE. 0) THEN
    PRINT *, 'Error occurred while freeing memory'
 END IF

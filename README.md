@@ -1,7 +1,6 @@
 # Fortran 2003 VECTOR types.
 
-This package contains a Fortran 2003 implementation of the C++ Vector
-class.
+This package contains a Fortran 2003 dynamic memory module.
 The VECTOR type is a dynamically resizing two-dimensional array with
 both REAL and INTEGER options (REALVECTOR and INTVECTOR types).
 The first dimension of a VECTOR object VEC is fixed upon initialization.
@@ -16,8 +15,8 @@ The second dimension self-resizes based on the following rules:
 
 ## Contents
 
- - Vector.f90 contains the VECTOR\_MOD module containing the VECTOR
-   interface functions, subroutines, and data types.
+ - Vector.f90 contains the VECTOR\_MOD module containing the complete
+   VECTOR class (interfaces, functions, subroutines, and data types).
  - main.f90 contains driver code in the form of a command line testing
    interface.
  - Makefile is a simple makefile for this project.
@@ -27,21 +26,15 @@ The second dimension self-resizes based on the following rules:
 To use the REALVECTOR and INTVECTOR data types, include the following
 module:
 ``
-USE VECTOR_MOD
+USE VECTOR_CLASS
 ``
 The two types provided are TYPE(REALVECTOR) and TYPE(INTVECTOR).
 The REALVECTOR type uses the R8 data type for 64-bit real arithmetic,
-provided in the VECTOR\_TYPE module.
-Both types have 4 fields:
- - VEC%DAT(:,:) contains the dynamically allocated data.
- - VEC%LENGTH contains the length of the vector.
- - VEC%MAXLEN contains the current length of the second dimension that
-   has been allocated for (though not necessarilly used).
-It is highly recommended that VEC%LENGTH and VEC%MAXLEN never be directly
-accessed.
-Subroutines are provided for interfacing safely with the memory.
+provided in the same module. All internal memory for both VECTOR types
+is private, and the VECTOR must be interfaced using the provided
+functions and subroutines.
 
-All subroutines related to the Vector class use an error flag IERR to
+All subroutines related to the Vector class use an error flag ISTAT to
 report successful operations.
 The scheme is as follows:
  - IERR = 0 : SUCCESS
@@ -52,30 +45,37 @@ The scheme is as follows:
 
 The following 2 subroutines are used to safely allocate and deallocate
 VECTOR objects:
- - NEWVECTOR(VEC, IERR, DIM) allocates VEC as a new VECTOR object.
-   The DIM argument is optional. If provided, it specifies the length
-   of the first dimension. If omitted, the first dimension is assumed
-   to have length 1 (note, that even if it has length 1, the first
-   dimension must still be treated as a vector, not a scalar).
- - VECTORFREE(VEC, IERR) frees any memory currently allocated for VEC.
+ - VEC = [REAL|INT]VECTOR([DIM, ISTAT]) allocates VEC as a new VECTOR
+   object. The optional argument DIM, if provided, specifies the length
+   of the first (static) dimension. If omitted, the first dimension is
+   assumed to have length 1 (note, that even if it has length 1, the
+   first dimension must still be treated as a vector, not a scalar).
+ - VEC%FREE([ISTAT]) frees any memory currently allocated for VEC.
 
-The following 4 subroutines are used to manage memory. Note, that the
+The following 5 subroutines are used to manage memory. Note, that the
 argument ITEM must match the first dimension and type of VEC.
- - VECTORPUSH(VEC, ITEM, IERR) pushes ITEM to the
+ - VEC%PUSH(ITEM[, ISTAT]) pushes ITEM(:) to the
    end of VEC, resizing if necessarry.
- - VECTORPOP(VEC, ITEM, IERR) pops the top item off
+ - VEC%POP(ITEM[, ISTAT]) pops the top item off
    the back of VEC, resizing if necessarry and returns
-   the value in ITEM.
- - VECTORINS(VEC, ITEM, IND, IERR) inserts ITEM at
+   the value in ITEM(:).
+ - VEC%INSERT(ITEM, IND[, ISTAT]) inserts ITEM at
    location IND.
- - VECTORDEL(VEC, IND, IERR) deletes the item at
+ - VEC%DELETE(IND[, ISTAT]) deletes the item at
    location IND.
+ - VEC%SET(IND, ITEM[, ISTAT]) sets the value of VEC
+   location IND to ITEM(:).
 
-The following 2 functions are provided for data access:
- - VECTORITEM(VEC, IND, IERR) returns the one dimensional array
+The following 4 functions are provided for data access:
+ - VEC%ITEM(IND[, IERR]) returns the one-dimensional array
    located at index IND.
- - VECTORLENGTH(VEC) returns the integer valued length of VEC
-   (VEC%LENGTH).
+ - VEC%DAT() returns the entire two-dimensional data set
+   currently stored in VEC (first dimension fixed, second
+   dynamic).
+ - VEC%DIM() returns the integer valued size of the first
+   (static) dimension of VEC.
+ - VEC%LENGTH() returns the integer valued size of the
+   second (dynamic) dimension of VEC.
 
 ### Installation
 
