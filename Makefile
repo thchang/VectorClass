@@ -2,6 +2,7 @@ FORT = gfortran
 CFLAGS = -c
 
 all : main
+	./main
 
 main: main.f90 Vector.o
 	$(FORT) main.f90 Vector.o -o main
